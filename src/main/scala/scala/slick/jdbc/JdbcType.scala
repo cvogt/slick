@@ -40,8 +40,15 @@ trait JdbcType[T] extends TypedType[T] { self =>
     case Some(s) => updateValue(s, r)
     case None => r.updateNull()
   }
-  def valueToSQLLiteral(value: T): String = value.toString
+
+  /** Convert a value to a SQL literal.
+    * Throws a `SlickException` if `hasLiteralForm` is false. */
+  def valueToSQLLiteral(value: T): String
   def nullable = false
+
+  /** Indicates whether values of this type have a literal representation in
+    * SQL statements. */
+  def hasLiteralForm: Boolean
 
   override def optionType: OptionTypedType[T] with JdbcType[Option[T]] = new OptionTypedType[T] with JdbcType[Option[T]] {
     val elementType = self
@@ -55,6 +62,7 @@ trait JdbcType[T] extends TypedType[T] { self =>
     override def valueToSQLLiteral(value: Option[T]): String = value.map(self.valueToSQLLiteral).getOrElse("null")
     override def nullable = true
     override def toString = s"Option[$self]"
+    def hasLiteralForm = self.hasLiteralForm
     def mapChildren(f: Type => Type): OptionTypedType[T] with JdbcType[Option[T]] = {
       val e2 = f(elementType)
       if(e2 eq elementType) this
@@ -85,6 +93,7 @@ abstract class MappedJdbcType[T, U](implicit tmd: JdbcType[U], tag: ClassTag[T])
   def newSqlTypeName: Option[String] = None
   def newValueToSQLLiteral(value: T): Option[String] = None
   def newNullable: Option[Boolean] = None
+  def newHasLiteralForm: Option[Boolean] = None
 
   def sqlType = newSqlType.getOrElse(tmd.sqlType)
   override def sqlTypeName = newSqlTypeName.getOrElse(tmd.sqlTypeName)
@@ -96,6 +105,7 @@ abstract class MappedJdbcType[T, U](implicit tmd: JdbcType[U], tag: ClassTag[T])
   def updateValue(v: T, r: PositionedResult) = tmd.updateValue(map(v), r)
   override def valueToSQLLiteral(value: T) = newValueToSQLLiteral(value).getOrElse(tmd.valueToSQLLiteral(map(value)))
   override def nullable = newNullable.getOrElse(tmd.nullable)
+  def hasLiteralForm = newHasLiteralForm.getOrElse(tmd.hasLiteralForm)
   def scalaType = ScalaBaseType[T]
 }
 
