@@ -64,7 +64,7 @@ class RelationalScalarFunctionTest extends TestkitTest[RelationalTestDB] {
     def * = (id, name) <>(Entity.tupled, Entity.unapply)
   }
 
-  private val nameTest = "Some"
+  private val nameTest = "abcdefghijklmnopqrstuvwxyz"
 
   private def getCollection = {
     val entities = TableQuery[Entities]
@@ -74,18 +74,18 @@ class RelationalScalarFunctionTest extends TestkitTest[RelationalTestDB] {
   }
 
   def testSubstring1() {
-    val names = for (s <- getCollection) yield s.name.substring(1, 3)
-    names.run.foreach(n => assertEquals(nameTest.substring(1, 3), n))
+    val names = for (s <- getCollection) yield s.name.substring(3, 5)
+    names.run.foreach(n => assertEquals(nameTest.substring(3, 5), n))
   }
 
   def testSubstring2() {
-    val names = for (s <- getCollection) yield s.name.substring(1)
-    names.run.foreach(n => assertEquals(nameTest.substring(1), n))
+    val names = for (s <- getCollection) yield s.name.substring(3)
+    names.run.foreach(n => assertEquals(nameTest.substring(3), n))
   }
 
   def testReplace() = ifCap(rcap.replace) {
-    val names = for (s <- getCollection) yield s.name.replace("So", "Ro")
-    names.run.foreach(n => assertEquals(nameTest.replace("So", "Ro"), n))
+    val names = for (s <- getCollection) yield s.name.replace("cd", "XXXX")
+    names.run.foreach(n => assertEquals(nameTest.replace("cd", "XXXX"), n))
   }
 
   def testReverse() = ifCap(rcap.reverse) {
@@ -99,8 +99,8 @@ class RelationalScalarFunctionTest extends TestkitTest[RelationalTestDB] {
   }
 
   def testDrop() = {
-    val names = for (s <- getCollection) yield s.name.drop(2)
-    names.run.foreach(n => assertEquals(nameTest.drop(2), n))
+    val names = for (s <- getCollection) yield s.name.drop(3)
+    names.run.foreach(n => assertEquals(nameTest.drop(3), n))
   }
 
   def testIndexOf() = ifCap(rcap.indexOf){
